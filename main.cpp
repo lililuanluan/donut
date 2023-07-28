@@ -106,10 +106,13 @@ void render_frame(const double& A, const double& B) {
     const double theta_spacing = 0.07;
     const double phi_spacing = 0.02;
 
-    const char pixels[] = ".,-~:;=!*#$@";
+    // const char pixels[] = ".,-~:;=!*#$@";
     // const char pixels[] = "Ñ@#W$9876543210?!abc;:+=-,._";
-    int screen_width = WIDTH;
-    int screen_height = HEIGHT;
+    const char pixels[] = " _.,-=+:;cba!?0123456789$W#@";
+    // int screen_width = WIDTH;
+    // int screen_height = HEIGHT;
+    int screen_width = width();
+    int screen_height = height();
 
     char* output = new char[screen_height * screen_width];
     double* zbuffer = new double[screen_height * screen_width];
@@ -195,6 +198,10 @@ void render_frames2() {
     
 }
 int main() {
+    // string s = "Ñ@#W$9876543210?!abc;:+=-,._";
+    // std::reverse(s.begin(), s.end());
+    // cout << s;
+    // return 0;
     
     WIDTH = width();
     HEIGHT = height();
