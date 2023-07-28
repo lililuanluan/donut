@@ -84,7 +84,7 @@ int height() {
     return rows;
 };
 
-int WIDTH, HEIGHT;
+
 
 /// clear terminal output
 void ClearScreen() {
@@ -98,8 +98,7 @@ const double PI = std::numbers::pi; // C++20
 
 void render_frame(const double& A, const double& B) {
 
-    // clear terminal output
-    // system("cls");    
+    // clear terminal output    
     ClearScreen();
 
 
@@ -109,8 +108,7 @@ void render_frame(const double& A, const double& B) {
     // const char pixels[] = ".,-~:;=!*#$@";
     // const char pixels[] = "Ñ@#W$9876543210?!abc;:+=-,._";
     const char pixels[] = " _.,-=+:;cba!?0123456789$W#@";
-    // int screen_width = WIDTH;
-    // int screen_height = HEIGHT;
+    
     int screen_width = width();
     int screen_height = height();
 
@@ -146,12 +144,11 @@ void render_frame(const double& A, const double& B) {
             double L = luminance(light, norm); // L is in the range 0..sqrt(2)
 
             if (L > 0) {
-
                 if (ooz > zbuffer[xp + yp * screen_width]) {
                     zbuffer[xp + yp * screen_width] = ooz;
                     double pix_num = sizeof(pixels) / sizeof(pixels[0]);
                     int luminance_index = L * int(pix_num/sqrt(2)-1); 
-                    assert(luminance_index < strlen(pixels));
+                    // assert(luminance_index < strlen(pixels));
                     output[xp + yp * screen_width] = pixels[luminance_index];
                 }
             }
@@ -159,7 +156,6 @@ void render_frame(const double& A, const double& B) {
     }
 
     // output to screen
-    // std::ios_base::sync_with_stdio(false);
     stringstream ss {};
     for (int j = 0; j < screen_height; j++) {
         for (int i = 0; i < screen_width; i++) {
@@ -169,6 +165,8 @@ void render_frame(const double& A, const double& B) {
         ss << '\n';
     }
     cout << ss.str() << endl; // output the whole frame at once, instead of printing a line each time
+
+
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     delete[] zbuffer;
     delete[] output;
@@ -198,14 +196,8 @@ void render_frames2() {
     
 }
 int main() {
-    // string s = "Ñ@#W$9876543210?!abc;:+=-,._";
-    // std::reverse(s.begin(), s.end());
-    // cout << s;
-    // return 0;
-    
-    WIDTH = width();
-    HEIGHT = height();
 
+    // render_frames();
     render_frames2();
     // render_frame(PI / 2, PI / 4);
 
