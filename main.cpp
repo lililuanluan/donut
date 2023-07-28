@@ -8,8 +8,12 @@
 #include <cmath>
 #include <numbers>
 #include <algorithm>
+ #include <cstdio>
+#include <sstream>
+#include <chrono>
+#include <thread>
 
-using std::cout, std::endl, std::vector, std::string;
+using std::cout, std::endl, std::vector, std::string, std::stringstream;
 
 struct Point {
     double x = {};
@@ -23,7 +27,7 @@ struct Normal {
 };
 
 
-Point project_scene(const Point p, double K1, double screen_width, double screen_height) {
+Point project_scene(const Point& p, const double& K1, const double& screen_width, const double& screen_height) {
 
     double ooz = 1 / (p.z); // one over z
     double _x = std::floor(screen_width / 2 + K1 * ooz * p.x);
@@ -34,7 +38,7 @@ Point project_scene(const Point p, double K1, double screen_width, double screen
 }
 
 
-Point make_donut_point(double R1, double R2, double phi, double theta, double A, double B, double K2) {
+Point make_donut_point(const double& R1, const double& R2, const double& phi, const double& theta, const double& A, const double& B, const double& K2) {
 
     double costheta = cos(theta), sintheta = sin(theta);
     double cosphi = cos(phi), sinphi = sin(phi);
@@ -49,7 +53,7 @@ Point make_donut_point(double R1, double R2, double phi, double theta, double A,
 }
 
 
-Normal get_point_normal(double theta, double phi, double A, double B) {
+Normal get_point_normal(const double& theta, const double& phi, const double& A, const double& B) {
     double s1 = cos(A) * sin(theta) - sin(A) * cos(theta) * sin(phi);
     double Nx = cos(B) * cos(phi) * cos(theta) - sin(B) * s1;
     double Ny = cos(B) * s1 + sin(B) * cos(phi) * cos(theta);
@@ -80,19 +84,32 @@ int height() {
     return rows;
 };
 
+int WIDTH, HEIGHT;
+
+/// clear terminal output
+void ClearScreen() {
+    // system("cls");  // this is slow, see https://cplusplus.com/articles/4z18T05o/
+    if (system("CLS")) system("clear");
+    // cout << string( WIDTH*HEIGHT, '\n' ); // not a good idea
+    
+}
+
 const double PI = std::numbers::pi; // C++20
 
 void render_frame(const double& A, const double& B) {
 
     // clear terminal output
-    system("cls");    
+    // system("cls");    
+    ClearScreen();
+
 
     const double theta_spacing = 0.07;
     const double phi_spacing = 0.02;
 
     const char pixels[] = ".,-~:;=!*#$@";
-    int screen_width = width();
-    int screen_height = height();
+    // const char pixels[] = "Ñ@#W$9876543210?!abc;:+=-,._";
+    int screen_width = WIDTH;
+    int screen_height = HEIGHT;
 
     char* output = new char[screen_height * screen_width];
     double* zbuffer = new double[screen_height * screen_width];
@@ -103,7 +120,7 @@ void render_frame(const double& A, const double& B) {
 
     const double w = std::min(screen_width, screen_height);
     const double R2 = w / 2;
-    const double R1 = w / 5;
+    const double R1 = w / 7;
     double K1 = w / 2;
     double K2 = 2 * K1;
 
@@ -119,17 +136,18 @@ void render_frame(const double& A, const double& B) {
             int xp = project_point.x;
             int yp = project_point.y;
             
-            assert(xp + yp * screen_width < screen_height * screen_width && xp + yp * screen_width >= 0);
+            // assert(xp + yp * screen_width < screen_height * screen_width && xp + yp * screen_width >= 0);
 
             Normal norm = get_point_normal(theta, phi, A, B);
             Point light = { 0, 1, -1 };
-            double L = luminance(light, norm);
+            double L = luminance(light, norm); // L is in the range 0..sqrt(2)
 
             if (L > 0) {
 
                 if (ooz > zbuffer[xp + yp * screen_width]) {
                     zbuffer[xp + yp * screen_width] = ooz;
-                    int luminance_index = L * 8;
+                    double pix_num = sizeof(pixels) / sizeof(pixels[0]);
+                    int luminance_index = L * int(pix_num/sqrt(2)-1); 
                     assert(luminance_index < strlen(pixels));
                     output[xp + yp * screen_width] = pixels[luminance_index];
                 }
@@ -138,14 +156,17 @@ void render_frame(const double& A, const double& B) {
     }
 
     // output to screen
+    // std::ios_base::sync_with_stdio(false);
+    stringstream ss {};
     for (int j = 0; j < screen_height; j++) {
         for (int i = 0; i < screen_width; i++) {
-            assert(i + j * screen_width < screen_height * screen_width);
-            cout << output[i + j * screen_width];
-        }
-        cout << '\n';
+            // assert(i + j * screen_width < screen_height * screen_width);
+            ss << output[i + j * screen_width];
+        }        
+        ss << '\n';
     }
-
+    cout << ss.str() << endl; // output the whole frame at once, instead of printing a line each time
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
     delete[] zbuffer;
     delete[] output;
 }
@@ -159,10 +180,27 @@ void render_frames() {
         }
     }
 }
+void render_frames2() {
+    const double A_spacing = PI / 16;
+    double A = 0; 
+    double B = PI / 5;
+    while(true) {
+        if(A < 2 * PI - A_spacing) {
+            render_frame(A, B);
+            A += A_spacing;
+        } else {
+            A = 0;
+        }
+    }
+    
+}
 int main() {
+    
+    WIDTH = width();
+    HEIGHT = height();
 
-    // render_frames();
-    render_frame(PI / 2, PI / 4);
+    render_frames2();
+    // render_frame(PI / 2, PI / 4);
 
     return 0;
 }
