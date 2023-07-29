@@ -13,6 +13,8 @@
 #include <chrono>
 #include <thread>
 
+#include "timer.h"
+
 using std::cout, std::endl, std::vector, std::string, std::stringstream;
 
 struct Point {
@@ -70,6 +72,7 @@ double luminance(const Point& light, const Normal& norm) {
 
 /// get width of terminal (windows only)
 int width() {
+    // Timer t("get width"); // 10~20 us
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     int columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -78,6 +81,7 @@ int width() {
 
 /// get height of terminal (windows only)
 int height() {
+    // Timer t("get height");  // 10~20 us
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     int rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -88,19 +92,20 @@ int height() {
 
 /// clear terminal output
 void ClearScreen() {
+    Timer t("clear screen");
     // system("cls");  // this is slow, see https://cplusplus.com/articles/4z18T05o/
-    if (system("CLS")) system("clear");
-    // cout << string( WIDTH*HEIGHT, '\n' ); // not a good idea
+    if (system("CLS")) system("clear"); // 5~7 ms
+    // cout << string( height(), '\n' ); // 0.4 - 1.8 ms actually it's faster and smooth enough, but it is a stupid way to clear the screen
     
 }
 
 const double PI = std::numbers::pi; // C++20
 
-void render_frame(const double& A, const double& B) {
-
+void render_frame(const double& A, const double& B) { 
+    
     // clear terminal output    
     ClearScreen();
-
+    // Timer t("render a single frame"); // 1~2 ms
 
     const double theta_spacing = 0.07;
     const double phi_spacing = 0.02;
@@ -164,6 +169,7 @@ void render_frame(const double& A, const double& B) {
         }        
         ss << '\n';
     }
+    // cout << std::unitbuf;
     cout << ss.str() << endl; // output the whole frame at once, instead of printing a line each time
 
 
@@ -181,11 +187,13 @@ void render_frames() {
         }
     }
 }
-void render_frames2() {
+void render_frames2(int cycles) {
     const double A_spacing = PI / 16;
     double A = 0; 
     double B = PI / 5;
-    while(true) {
+    int cnt = 0;
+    while(cnt <= cycles) {
+        cnt ++;
         if(A < 2 * PI - A_spacing) {
             render_frame(A, B);
             A += A_spacing;
@@ -196,10 +204,19 @@ void render_frames2() {
     
 }
 int main() {
+    Timer t {"render frames"};
 
-    // render_frames();
-    render_frames2();
+    render_frames();
+    // render_frames2(1000);
     // render_frame(PI / 2, PI / 4);
 
     return 0;
 }
+
+/*
+statistics for render_frames2(1000):
+baseline: 12800.7ms
+
+
+
+*/
